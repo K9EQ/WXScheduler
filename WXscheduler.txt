@@ -1,0 +1,63 @@
+WXscheduler.pyw is a Python 3 program that automates certain aspects of
+Wires-X Room/Node connections according to a user defined schedule.
+To that end WXscheduler.pyw must be run on the same Windows PC
+that hosts the Wires-X application controlling either an HRI-200 or
+a USB connected radio that supports PDN operation.
+
+Schedulable operations:
+  - Settings->Call settings
+      - Unlimited TOT
+      - TOT(TimeOut Timer)
+  - Settings->General settings
+      - Round QSO Room connection
+      - Accept calls while in Round QSO Rooms
+      - Back to Round QSO after disconnect
+      - Return to Room
+      - Room ID
+  - Connect <Node/Room>
+  - Disconnect
+  - Restart Wires-X App
+
+Immediate operation:
+  - Force Disconnect
+
+Bonus operation:
+  Display Last Heard information that the Wires-X application updates once a minute.
+  If available, Lat/Lon displayed as 6-character Grid Square.
+
+Wxscheduler v1.3 updates:
+  Last Heard information now correctly displays the newer Yaesu models
+       (i.e. FT5-D, FTM-200, and FTM-500)
+  Desktop\Wires-X_Last_Heard.html contains hypertext encoded callsigns
+       that perform a QRZ.com callsign lookup.
+
+Prerequisites (versions below are what was tested on):
+
+    Windows PC (win7 and higher)
+        Wires-x App (Ver-1.550)
+        Python 3 (32-bit) because Wires-X App uses the win32 UI
+        site-packages: PySimpleGUI, pywinauto
+
+Installing Python:
+
+    Recommend going to https://www.python.org/downloads/windows/
+    to find a Python release that matches Windows on your PC.
+
+    After installing Python, use a CMD window to load site-packages:
+        - pip install pywinauto PySimpleGui
+
+Installing WXscheduler.pyw:
+
+    Copy WXscheduler.pyw to your Desktop
+
+    Double click on the WXscheduler.pyw icon to launch the program.
+
+    Hint: To see any startup or run time issues:
+          - Open a CMD window
+          - Copy WXscheduler.pyw WXscheduler.py
+          - WXscheduler.py
+
+Enjoy,
+
+Bill
+w9lbr@arrl.net

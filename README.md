@@ -1,6 +1,22 @@
 # WXScheduler
- Schedule WiRES-X node room changes
+Schedule WiRES-X node room changes
 This repository is taken from the YaesuSystemFusion group on groups.io. It is the work of W9LBR.
+
+XScheduler was written by Bill, W9LBR. It has been packaged as an .exe with a Windows installer by Chris K9EQ. In addition, the following changes have been made.
+ - 2023-01-12 2.5.1 Removed radioID error messages from the log (there were too many of them
+    and they didn't add value). Created icons.
+
+The packaged version displays the GUI without a shell console. If you want the console as well, 
+rename the file to *.py instead of *.pyw. You'll then need to open up a shell (command prompt)
+and launch with a 32-bit Python interpreter as in: "C:\python32 WXSheduler.py".
+The source code is available at https://github.com/K9EQ/WXScheduler.
+
+See HamOperator.com for downloads, discussions and more information about WXScheduler.
+
+Bill has done a fantastic job with this program. I hope that my minor additions make it easier for
+a wider audience to benefit from it.
+
+Bill's original text file, WXScheduler.txt, follows:
 
 From the information file provided by W9LBR:
 WXscheduler.pyw is a Python 3 program that automates certain aspects of Wires-X Room/Node connections according

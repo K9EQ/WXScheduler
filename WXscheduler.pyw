@@ -9,6 +9,14 @@
 
     Copyright 2020 PySimpleGUI.com
     Licensed under LGPL-3
+    
+    WXScheduler.py was written by Bill, W9LBR
+    Version 2.5
+    Modifications by Chris, K9EQ: HamOperator.com
+    2023-01-12 Version 2.5.1
+     - Removed TxID errors from error logging (too many, no value)
+     - Changed titlebar icon
+     
 """
 import sys
 import PySimpleGUI as sg
@@ -291,7 +299,7 @@ def refreshLastHeard(settings, previous_cksum):
                 radioName = RadioNameFromRadioID[ui.radioID[:2]]
             except:                # corrupt radioID -- set radioName to radioID
                 radioName = '?%s?' % ui.radioID
-                debuglines.append('Corrupt radioID {%s} [%s]' % (ui.radioID, line))
+                #debuglines.append('Corrupt radioID {%s} [%s]' % (ui.radioID, line)) K9EQ 2.5.1
             
         if ui.callsign == ui.nodeName:
             outputScreen.append( '%s %s [%s] %-7.7s %s %s' % (ui.timestamp,source,ui.radioID,radioName,ui.callsign,ui.gridsq) )
@@ -1219,7 +1227,7 @@ def create_main_window(settings):
                 [sg.T('  Schedule:'),sg.Listbox(get_scheduled(settings), size=(100,numScheduledEvents), font=('Consolas',9))],
                 [sg.Button('Force Disconnect'), sg.Button('Scheduler'), sg.Button('Settings')]  ]
 
-    return sg.Window('WXscheduler (v2.5)', layout, location=tuple(settings['lastLocation']), finalize=True)
+    return sg.Window('WXscheduler (v2.5.1)', layout, location=tuple(settings['lastLocation']), finalize=True, icon='WXScheduler.ico') # K9EQ 2.5.1
 
 ##################### Derive Settings Event Key from initial event values #####################
 def makeSettingsEventKey( eventValues ):

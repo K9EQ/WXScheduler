@@ -1,3 +1,17 @@
+WXScheduler was written by Bill, W9LBR. It has been packaged as an .exe with a Windows installer by Chris K9EQ. In addition, the following changes have been made.
+ - 2023-01-10 2.5.1 Removed radioID error messages from the log (there were too many of them and they didn't add value)
+
+The packaged version displays the GUI without a shell console. If you want the console as well, 
+rename the file to *.py instead of *.pyw. You'll then need to open up a shell (command prompt)
+and launch with a 32-bit Python interpreter as in: "C:\python32 WXSheduler.py".
+The source code is available at https://github.com/K9EQ/WXScheduler.
+Also see HamOperator.com for more information about WXScheduler.
+
+Bill has done a fantastic job with this program. I hope that my minor additions make it easier for
+a wider audience to benefit from it.
+
+Bill's original text file, WXScheduler.txt, follows:
+
 WXscheduler.pyw is a Python 3 program that automates certain aspects of Wires-X Room/Node connections according
 to a user defined schedule.
 
@@ -33,7 +47,7 @@ Scheduler Settings Example (Automatically reconnects after network glitch):
        [ ] Accept calls while in Round QSO Rooms
        [x] Back to Round QSO after disconnect
        [x] Return to Room
-	          Room ID: [MNWIS]
+              Room ID: [MNWIS]
        [x] Unlimited TOT
        TOT(TimeOut Timer): [60]
                   Command: [Disconnect]
@@ -50,7 +64,7 @@ Scheduler Settings Example (Automatically reconnects after network glitch):
        [x] Accept calls while in Round QSO Rooms
        [x] Back to Round QSO after disconnect
        [x] Return to Room
-	          Room ID: [LocFav-ROOM]
+              Room ID: [LocFav-ROOM]
        [ ] Unlimited TOT
        TOT(TimeOut Timer): [10]
                   Command: [none]
@@ -72,12 +86,12 @@ WXscheduler v2.5 updates:
       - JSON data fields are now saved in pretty mode
       - When WXscheduler-v2.5 detects an existing WXscheduler.cfg without timezone data fields,
         the user will be prompted to set their local timezone value and all existing events will
-	be updated with the local timezone value.
+    be updated with the local timezone value.
   - WXscheduler's main window:
       - Scheduled events are displayed in chronological order
       - When the main window is moved, its new position is remembered. And all sub-windows
           will be opened in the same position. This replaces PySimpleGUI's default of centering
-	  window within the display.
+      window within the display.
       - [Add Event] and [Delete Event] buttons have been replaced with the [Scheduler] button that
           when clicked provides a new window with buttons: [New] [Delete] [Update] [Cancel]
 

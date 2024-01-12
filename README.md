@@ -10,7 +10,8 @@ The packaged version displays the GUI without a shell console. If you want the c
 rename the file to *.py instead of *.pyw. You'll then need to open up a shell (command prompt)
 and launch with a 32-bit Python interpreter as in: "C:\python32 WXSheduler.py".
 The source code is available at https://github.com/K9EQ/WXScheduler.
-Also see HamOperator.com for more information about WXScheduler.
+
+See HamOperator.com for downloads, discussions and more information about WXScheduler.
 
 Bill has done a fantastic job with this program. I hope that my minor additions make it easier for
 a wider audience to benefit from it.

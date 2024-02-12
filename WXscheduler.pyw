@@ -10,28 +10,40 @@
     Copyright 2020 PySimpleGUI.com
     Licensed under LGPL-3
     
-    WXScheduler.py was written by Bill, W9LBR
-    Version 2.5
-    Modifications by Chris, K9EQ: HamOperator.com
-    2023-01-12 Version 2.5.1
-     - Removed TxID errors from error logging (too many, no value)
-     - Changed titlebar icon
-     
+        WXScheduler.py was written by Bill, W9LBR
+        Version 2.6.1
+        Modifications by Chris, K9EQ: HamOperator.com
+        2023-02-03 Version 2.6.1a
+         - Removed TxID errors from error logging (too many, no value)
+         - Changed titlebar icon
+         - Does not crash when adjusting schedule if the 'x' icon is selected
+
 """
 import sys
-import PySimpleGUI as sg
 import time
 from datetime import datetime
-import pytz
 import json
 from os import path
-from pywinauto import Application
+try:
+    from pywinauto import Application
+    import PySimpleGUI as sg
+    import pytz
+except:
+    print()
+    print('*----------------------------------------------------------------------------------------*')
+    print('* OOPS: At least one of the additional Python packages has not been installed on this PC *')
+    print('*       From CMD window type:                                                            *')
+    print('*                       pip install pywinauto PySimpleGUI pytz                           *')
+    print('*----------------------------------------------------------------------------------------*')
+    sys.exit(99)
 
 ################ Global variable definitions #################
+PROGRAM_NAME = 'WXscheduler'
+PROGRAM_VERSION = 'v2.6.1a'
 WIRESXA_PATHNAME_1 = R'~\OneDrive\Documents\WIRESXA'
 WIRESXA_PATHNAME_2 = R'~\Documents\WIRESXA'
 WIRESXA_PATHNAME = None         # Initialized in main()
-SETTINGS_FILENAME = R'\WXscheduler.cfg'
+SETTINGS_FILENAME = f'\\{PROGRAM_NAME}.cfg'
 SettingsFilePathname = None     # Initialized in main()
 USER_DESKTOP_1 = R'~\OneDrive\Desktop'
 USER_DESKTOP_2 = R'~\Desktop'
@@ -49,7 +61,7 @@ SETTINGS_KEYS_TO_ELEMENT_KEYS = {'theme':'-THEME-',
                                 }
 ExecutedCommands = []
 
-# Assign hierarchical values to strings that makes Scheduled Event settings_Keys sortable 
+# Assign hierarchical values to strings that makes Scheduled Event settings_Keys sort Chronologically 
 OccursHierarchy = {'every':'0','1st':'1','2nd':'2','3rd':'3','4th':'4','5th':'5'} 
 DowHierarchy = {'day':'0','Sun':'1','Mon':'2','Tue':'3','Wed':'4','Thu':'5','Fri':'6','Sat':'7'}
 
@@ -251,7 +263,7 @@ def refreshLastHeard(settings, previous_cksum):
 
     outputScreen = []
     outputHTML = []
-    debuglines = []
+    #debuglines = []
 
     # read the entire file contents
     # NOTE: WXaccesslog sometimes contains non utf-8 characters
@@ -277,7 +289,7 @@ def refreshLastHeard(settings, previous_cksum):
 
         if len(f) < 7:
             # ignore the line
-            debuglines.append('Ignoring AccLog %d [%s]' % (len(f), line))
+            #debuglines.append('Ignoring AccLog %d [%s]' % (len(f), line))
             continue
 
         # update UserInfo class with field strings
@@ -297,9 +309,10 @@ def refreshLastHeard(settings, previous_cksum):
             # determine Radio Name from first 2 chars of ui.radioID
             try:
                 radioName = RadioNameFromRadioID[ui.radioID[:2]]
-            except:                # corrupt radioID -- set radioName to radioID
-                radioName = '?%s?' % ui.radioID
-                #debuglines.append('Corrupt radioID {%s} [%s]' % (ui.radioID, line)) K9EQ 2.5.1
+            except:                # corrupt radioID
+                continue  #ignore lines with corrupt radioID
+                #radioName = '?%s?' % ui.radioID
+                #debuglines.append('Corrupt radioID {%s} [%s]' % (ui.radioID, line))
             
         if ui.callsign == ui.nodeName:
             outputScreen.append( '%s %s [%s] %-7.7s %s %s' % (ui.timestamp,source,ui.radioID,radioName,ui.callsign,ui.gridsq) )
@@ -331,17 +344,17 @@ def refreshLastHeard(settings, previous_cksum):
         outputScreen.append(f'LastHeardLog: {e}')
 
     # Display debug output on the "console"
-    if len(debuglines) > 0:
-        for line in debuglines:
-            print('debug:',line)
+    #if len(debuglines) > 0:
+    #    for line in debuglines:
+    #        print('debug:',line)
 
     # reverse sort outputScreen lines by the timestamp field at the beginning of each output line
     outputScreen.sort(reverse=True)
 
     return current_cksum, outputScreen
 
-##################### Make an Add/Update Event window #####################
-def create_AddUpdate_event_window(settings, titleStr):
+##################### Make an Add/Edit Event window #####################
+def create_AddEdit_event_window(settings, titleStr):
     sg.theme(settings['theme'])
 
     def TextLabel(text): return sg.Text(text+':', justification='r', size=(15,1))
@@ -364,10 +377,10 @@ def create_AddUpdate_event_window(settings, titleStr):
                 [TextLabel('Argument'),sg.Input(default_text=Sched_cmdarg_default,key='-CMDARG-')],
                 [sg.Button('Save'), sg.Button('Cancel')]  ]
 
-    window = sg.Window(titleStr, layout, location=tuple(settings['lastLocation']), finalize=True)
+    window = sg.Window(titleStr, layout, location=tuple(settings['lastLocation']), finalize=True, icon='WXScheduler.ico') # K9EQ add icon 2.6.1a
     return window
 
-def add_event_to_schedule(settings, new_or_update, event_values):
+def add_event_to_schedule(settings, new_or_edit, event_values):
     global Sched_nth_default
     global Sched_day_default
     global Sched_hour_default
@@ -491,7 +504,7 @@ def add_event_to_schedule(settings, new_or_update, event_values):
                 ]
 
     # if new event key already in settings, show previous event being overwritten 
-    if new_or_update == 'New' and new_key in settings:
+    if new_or_edit == 'New' and new_key in settings:
         previous_event = settings[new_key]
         ret_str = 'WARNING: Replacing [%s %s %s %s %s %s] with [%s %s %s %s %s %s]' % (
                         previous_event[0],
@@ -557,6 +570,7 @@ def get_timezone_date_time_dow_nth(timezone_str):
         date_time_tz['dow']  = datetime.now(pytz.timezone(timezone_str)).strftime('%a') #Sun,Mon,Tue,Wed...
         date_time_tz['nth']  = Sched_nths[int((int(date_time_tz['dd']) + 6) / 7)]
         date_time_tz['tz']   = timezone_str
+        date_time_tz['tzoffset'] = datetime.now(pytz.timezone(timezone_str)).strftime('%S') #hours & minutes offset from UTC +0130 -1000
     except:
         emsg = '\nEXCEPTION OCCURED:\n'
         emsg += '  \"%s\" is not a valid Timezone designation\n' % timezone_str
@@ -992,6 +1006,10 @@ def performWXactions(eventData, settings):
     cmdarg = eventData[14]
     if command == 'Connect':
         # FYI--The App ignores Connecting to the same room that is already connected to.
+        # If a node is active, it will ignore the connect request                                 # K9EQ 2.6.b
+        response = DisconnectFromAnyRoom(app)                                                     # K9EQ 2.6.b Force a disconnect
+        delay(1000)                                                                               # K9EQ 2.6.b Delay to allow WiRES-X to respond
+        
         response = ConnectToRoom(app, cmdarg)
     elif command == 'Disconnect':
         response = DisconnectFromAnyRoom(app)
@@ -1011,7 +1029,27 @@ def get_executed_commands():
     if len(ExecutedCommands) <= 0:
         return ['<none>']
 
-    return sorted(ExecutedCommands, reverse=True)
+    reversedExecutedCommands = reversed(ExecutedCommands)
+    return list(reversedExecutedCommands)
+
+##################### Calculate chronological sort value given timezone name, event_hour and event_minute #####################
+def chron_calc( tzName, evHour, evMinute ):
+
+    tz_offset = datetime.now(pytz.timezone(tzName)).strftime('%z')
+    tzPlusMinus = tz_offset[0]   #cut 1st char
+    tzHour      = tz_offset[1:3] #cut 2nd and 3rd chars
+    tzMinute    = tz_offset[3:]  #cut 4th and 5th chars (to end)
+    minuteSum   = int((int(evMinute) + int(tzMinute)) % 60)
+    hourSum     = int((int(evMinute) + int(tzMinute)) / 60) + int(evHour) + int(tzHour)
+    hourMinute  = (hourSum * 100) + minuteSum
+
+    if tzPlusMinus == '-':
+        return str(20000 + hourMinute)
+
+    if tzPlusMinus == '+':
+        return str(20000 - hourMinute)
+
+    return '?????'  # unlikely to happen
 
 ##################### Load/Save Settings File #####################
 def load_settings():
@@ -1094,12 +1132,12 @@ def load_settings():
     eventKeysToPop = []
     updatedEvents = {}
     for key in settings:
-        # only process settings key that has a leading '@'
-        if key[0] == '@':
+        if key[0] == '@': # only process settings keys that have a leading '@'
             splitKey = key.split('-')
-            if len(splitKey) == 5:
-                continue # already has TZ
-            elif len(splitKey) == 4:
+            if len(splitKey) == 3:      # v2.6 - already has chronological key
+                pass
+
+            elif len(splitKey) == 4:    # pre-v2.5
                 # queue OLDkey pop that can't be done inside for-key-in-settings loop
                 eventKeysToPop.append(key)
                 oldVals = settings[key]
@@ -1121,10 +1159,22 @@ def load_settings():
                           ]
                 newKey = '@' + DowHierarchy[newVals[1]] + \
                          '-' + OccursHierarchy[newVals[0]] + \
-                         '-' + newVals[2] + \
-                         '-' + newVals[3] + \
-                         '-' + newVals[4]
+                         '-' + chron_calc(newVals[4], #-TZ-
+                                          newVals[2], #-HOUR-
+                                          newVals[3]) #-MINUTE-
                 updatedEvents[newKey] = newVals
+
+            elif len(splitKey) == 5:      # v2.5 - has tzName as last key element
+                # queue OLDkey pop that can't be done inside for-key-in-settings loop
+                eventKeysToPop.append(key)
+                newVals = settings[key]
+                newKey = '@' + DowHierarchy[newVals[1]] + \
+                         '-' + OccursHierarchy[newVals[0]] + \
+                         '-' + chron_calc(newVals[4], #-TZ-
+                                          newVals[2], #-HOUR-
+                                          newVals[3]) #-MINUTE-
+                updatedEvents[newKey] = newVals
+
             else:
                 print('Deleting invalid eventEntry key [{key}]')
                 eventKeysToPop.append(key)
@@ -1176,12 +1226,12 @@ def create_select_event_window(settings):
         layout = [  [sg.Text('Select Scheduled Event', font='Any 15')],
                     [TextLabel('No scheduled events'),sg.Combo(schedEVs,default_value=schedEVs[0],size=(80,numInScheduled),font=('Consolas',9),key='-EMPTY-')],
                     [sg.Button('New'), sg.Button('Cancel')]  ]
-        window = sg.Window('Add New Scheduled Event', layout, location=tuple(settings['lastLocation']), finalize=True)
+        window = sg.Window('Add New Scheduled Event', layout, location=tuple(settings['lastLocation']), finalize=True, icon='WXScheduler.ico') # K9EQ add icon
     else:
         layout = [  [sg.Text('Select Scheduled Event', font='Any 15')],
                     [TextLabel('Choose one'),sg.Combo(schedEVs,default_value=schedEVs[0],size=(80,numInScheduled),font=('Consolas',9),key='-CHOSEN EVENT-')],
-                    [sg.Button('New'), sg.Button('Delete'), sg.Button('Update'), sg.Button('Cancel')]  ]
-        window = sg.Window('Select Scheduled Event', layout, location=tuple(settings['lastLocation']), finalize=True)
+                    [sg.Button('New'), sg.Button('Delete'), sg.Button('Edit'), sg.Button('Cancel')]  ]
+        window = sg.Window('Select Scheduled Event', layout, location=tuple(settings['lastLocation']), finalize=True, icon='WXScheduler.ico') # K9EQ 2.6.1a add icon
 
     return window
 
@@ -1199,7 +1249,7 @@ def create_settings_window(settings):
                 [TextLabel('Wires-X Last Heard'),sg.Input(key='-WIRES-X LAST HEARD-', size=(65,1))], # don't Browse because loss of ~ ($HOME)
                 [sg.Button('Save'), sg.Button('Cancel')]  ]
 
-    window = sg.Window('Settings', layout, keep_on_top=True, location=tuple(settings['lastLocation']), finalize=True)
+    window = sg.Window('Settings', layout, keep_on_top=True, location=tuple(settings['lastLocation']), finalize=True, icon='WXScheduler.ico') # K9EQ 2.6.1a add icon
     for key in SETTINGS_KEYS_TO_ELEMENT_KEYS:   # update window with the values read from settings file
         try:
             window[SETTINGS_KEYS_TO_ELEMENT_KEYS[key]].update(value=settings[key])
@@ -1227,7 +1277,8 @@ def create_main_window(settings):
                 [sg.T('  Schedule:'),sg.Listbox(get_scheduled(settings), size=(100,numScheduledEvents), font=('Consolas',9))],
                 [sg.Button('Force Disconnect'), sg.Button('Scheduler'), sg.Button('Settings')]  ]
 
-    return sg.Window('WXscheduler (v2.5.1)', layout, location=tuple(settings['lastLocation']), finalize=True, icon='WXScheduler.ico') # K9EQ 2.5.1
+    return sg.Window(f'{PROGRAM_NAME} ({PROGRAM_VERSION})', layout, location=tuple(settings['lastLocation']), 
+    finalize=True, icon='WXScheduler.ico') # K9EQ 2.6.1a Display Icon
 
 ##################### Derive Settings Event Key from initial event values #####################
 def makeSettingsEventKey( eventValues ):
@@ -1237,9 +1288,9 @@ def makeSettingsEventKey( eventValues ):
     if keyList[0] == '-OCCURS-':
         settings_key = '@' + DowHierarchy[eventValues['-DOW-']] + \
                        '-' + OccursHierarchy[eventValues['-OCCURS-']] + \
-                       '-' + eventValues['-HOUR-'] + \
-                       '-' + eventValues['-MINUTE-'] + \
-                       '-' + eventValues['-TZ-']
+                       '-' + chron_calc(eventValues['-TZ-'],
+                                        eventValues['-HOUR-'],
+                                        eventValues['-MINUTE-'])
         return True, settings_key
 
     if keyList[0] == '-CHOSEN EVENT-':
@@ -1247,9 +1298,9 @@ def makeSettingsEventKey( eventValues ):
         if len(evL) >= 5:
             settings_key = '@' + DowHierarchy[evL[1]] + \
                            '-' + OccursHierarchy[evL[0]] + \
-                           '-' + evL[2] + \
-                           '-' + evL[3] + \
-                           '-' + evL[4]
+                           '-' + chron_calc(evL[4], #-TZ-
+                                            evL[2], #-HOUR-
+                                            evL[3]) #-MINUTE-
             return True, settings_key
         return False, 'invalid chosen'
 
@@ -1312,7 +1363,7 @@ def main():
     if len(emsg) > 0:
         emsg += '\nNOTE: This program requires:\n'
         emsg += ' - Wires-X app running on this same PC\n'
-        emsg += ' - WXscheduler running under same User ID as Wires-X app\n'
+        emsg += f' - {PROGRM_NAME} running under same User ID as Wires-X app\n'
         sg.popup_ok('FATAL ISSUE: \n\n' + emsg, background_color='red', text_color='white')
         return # Exit program
 
@@ -1320,6 +1371,7 @@ def main():
 
     dtL = get_timezone_date_time_dow_nth(settings['localTZ'])
     previous_minute = dtL['MM']
+    ExecutedCommands.append(f"{dtL['yyyy']}/{dtL['mm']}/{dtL['dd']} {dtL['HH']}:{dtL['MM']}:{dtL['SS']} ({dtL['tz']}) --- {PROGRAM_NAME} Started ---")
 
     while True: # Forever Loop - An iteration occurs when a window.read() returns an event, or the per second timeout occurs
 
@@ -1330,6 +1382,8 @@ def main():
             previousModTime = 0.0
             previous_cksum = hash('nothing yet')
             window = create_main_window(settings)
+
+        forceRefreshMainWindow = False
 
         # Display the current time in the main window
         #
@@ -1368,8 +1422,8 @@ def main():
             if is_time:
                 ## Execute scheduled actions ##
                 report = performWXactions(ev_data, settings)
-                ExecutedCommands.append('%s/%s/%s %s:%s:%s (%s) %s' % (dtz['yyyy'], dtz['mm'], dtz['dd'], dtz['HH'], dtz['MM'], dtz['SS'], dtz['tz'], report))
-                window['-EXECUTED-'].update(get_executed_commands())
+                ExecutedCommands.append(f"{dtz['yyyy']}/{dtz['mm']}/{dtz['dd']} {dtz['HH']}:{dtz['MM']}:{dtz['SS']} ({dtz['tz']}) {report}")
+                forceRefreshMainWindow = True
             previous_minute = current_minute
 
         # If the main Window has been moved:
@@ -1399,17 +1453,27 @@ def main():
         if event == 'Scheduler':
             # the Scheduler button in the main window has been clicked
             #
-            event, selectedSchedEvent = create_select_event_window(settings).read(close=True)
-            before_validKey, before_settings_key = makeSettingsEventKey(selectedSchedEvent)
+
+            ##################### K9EQ 2.6.1a
+            # Perform a test to see if there is valid information. If not, the user has probably
+            # clicked the 'x' close window box instead of selecting 'cancel'
+            # K9EQ 2.5.2
+            try: # K9EQ 2.5.2
+                event, selectedSchedEvent = create_select_event_window(settings).read(close=True)
+                before_validKey, before_settings_key = makeSettingsEventKey(selectedSchedEvent)
+            except: # K9EQ 2.5.2
+                event = 'Cancel' # Fake a cancel button push # K9EQ 2.6.1a
+            ##################### 
+
             if event == 'Cancel':
                 pass    # Nothing to do
-            elif event == 'New' or event == 'Update':
-                new_or_update = event
+            elif event == 'New' or event == 'Edit':
+                new_or_edit = event
                 if event == 'New' :
                     # Use Sched_*_defaults as last set, except force TZ to local TZ
                     Sched_timezone_default = settings['localTZ']
                     winTitleStr = 'Add New Event to Schedule'
-                elif event == 'Update':
+                elif event == 'Edit':
                     # Set defaults to selected event's values
                     selected_event_values = settings[before_settings_key]
                     Sched_nth_default = selected_event_values[0] # -OCCURS-
@@ -1427,26 +1491,25 @@ def main():
                     Sched_TimeOutTimer_default = selected_event_values[12] # -TimeOutTimer-
                     Sched_command_default = selected_event_values[13] # -COMMAND-
                     Sched_cmdarg_default = selected_event_values[14] # -CMDARG-
-                    winTitleStr = 'Update Event in Schedule'
+                    winTitleStr = 'Edit Event in Schedule'
 
-                # Get New/Updated event values
-                event, event_values = create_AddUpdate_event_window(settings, winTitleStr).read(close=True)
+                # Get New/Edit event values
+                event, event_values = create_AddEdit_event_window(settings, winTitleStr).read(close=True)
 
                 if event == 'Save':
-                    # the Save button in the Add/Update Event window has been clicked
+                    # the Save button in the Add/Edit Event window has been clicked
                     #
                     after_validKey, after_settings_key = makeSettingsEventKey(event_values)
-                    if new_or_update == 'Update' and before_validKey == True and after_validKey == True and before_settings_key != after_settings_key:
-                        # the Update changed settings_key value(s) - therefore must delete before_settings_key (and values) from settings
+                    if new_or_edit == 'Edit' and before_validKey == True and after_validKey == True and before_settings_key != after_settings_key:
+                        # the Edit changed settings_key value(s) - therefore must delete before_settings_key (and values) from settings
                         deleted_event = settings.pop(before_settings_key)
 
-                    ret, ew_str = add_event_to_schedule(settings, new_or_update, event_values)
+                    ret, ew_str = add_event_to_schedule(settings, new_or_edit, event_values)
                     if ret == True:
                         if len(ew_str) > 0:
                             sg.popup(ew_str, background_color='yellow', text_color='blue')
                         save_settings(settings, None)
-                        window.close()
-                        window = None
+                        forceRefreshMainWindow = True
                     else:
                         sg.popup(ew_str, background_color='red', text_color='white')
 
@@ -1457,15 +1520,14 @@ def main():
                 if validKey:
                     deleted_event = settings.pop(settings_key)
                     save_settings(settings, None)
-                    window.close()
-                    window = None
+                    forceRefreshMainWindow = True
 
         elif event == 'Force Disconnect':
             # the Force Disconnect button in the main window has been clicked
             #
             report = ForceDisconnectRoom(settings)
-            ExecutedCommands.append('%s %s' % (formatted_dtL, report))
-            window['-EXECUTED-'].update(get_executed_commands())
+            ExecutedCommands.append(f"{formatted_dtL} ({dtL['tz']}) {report}")
+            forceRefreshMainWindow = True
 
         elif event == 'Settings':
             # the Settings button in the main window has been clicked
@@ -1474,13 +1536,17 @@ def main():
             if event == 'Save':
                 # the Save button in the Settings window has been clicked
                 #
-                window.close()
-                window = None
                 save_settings(settings, values)
+                forceRefreshMainWindow = True
 
                 # update default with local timezone string
                 Sched_timezone_default = settings['localTZ']
 
+        if forceRefreshMainWindow is True:
+            window.close()
+            window = None
+
+    # while True -- exits here
     window.close()
     return
 

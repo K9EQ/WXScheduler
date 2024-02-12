@@ -1,7 +1,17 @@
-WXScheduler was written by Bill, W9LBR. It has been packaged as an .exe with a Windows installer by Chris K9EQ.
-  In addition, the following changes have been made:
- - 2023-01-12 2.5.1 Removed radioID error messages from the log (there were too many of them and they didn't add value)
-                    Added icons.
+WXScheduler was written by Bill, W9LBR. It has been packaged as an .exe with a Windows installer by Chris K9EQ. In addition, the following changes have been made.
+ - 2023-01-10 2.5.1  Removed radioID error messages from the log (there were too many of them and they didn't add value)
+                     Added an icon for the program
+ - 2023-02-12 2.6.1a Clicking the 'x' button on the scheduler menu no longer causes the program to crash
+
+The installer creates a WXScheduler directory under the WIRESXA directory where the Yaesu software lives. It installs the following files:
+ - Readme.txt,      this text
+ - WXScheduler.pyw, the Python source file
+ - WXScheduler.ico, the icon file
+ - WXScheduler.exe, the executable
+ - Uninstal.exe,    the program to uninstall WXScheduler
+
+The uninstaller removes these files and the directory. It does not remove the .json
+configuration file one directory above.
 
 The packaged version displays the GUI without a shell console. If you want the console as well, 
 rename the file to *.py instead of *.pyw. You'll then need to open up a shell (command prompt)
@@ -9,8 +19,12 @@ and launch with a 32-bit Python interpreter as in: "C:\python32 WXSheduler.py".
 The source code is available at https://github.com/K9EQ/WXScheduler.
 Also see HamOperator.com for more information about WXScheduler.
 
+Drop in on the Fusion Technical Net to discuss the program. The net is held Monday at 7:30 PM US Central time in Room or YSF 21493.
+
 Bill has done a fantastic job with this program. I hope that my minor additions make it easier for
 a wider audience to benefit from it.
+
+Note that the WXScheduler is either stored in the \OneDrive\Documents\WIRESXA folder, if it exists, or in the user's Documents\WIRESXA folder. So if you can't find it in your WIRESXA folder, you may have OneDrive so look there.
 
 Bill's original text file, WXScheduler.txt, follows:
 

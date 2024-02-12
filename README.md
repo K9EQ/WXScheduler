@@ -5,6 +5,8 @@ This repository is taken from the YaesuSystemFusion group on groups.io. It is th
 XScheduler was written by Bill, W9LBR. It has been packaged as an .exe with a Windows installer by Chris K9EQ. In addition, the following changes have been made.
  - 2023-01-12 2.5.1 Removed radioID error messages from the log (there were too many of them
     and they didn't add value). Created icons.
+ - 2023-02-12 2.6.1a Closing the scheduler window with 'x' no longer crashes program
+ -                   Fixed problems with Python library in the 2.5.1 build. Everything should actually work now.
 
 The packaged version displays the GUI without a shell console. If you want the console as well, 
 rename the file to *.py instead of *.pyw. You'll then need to open up a shell (command prompt)
